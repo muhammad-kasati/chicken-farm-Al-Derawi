@@ -120,9 +120,8 @@ export default function BirdSlider({ birds, dict, lang }: { birds: any[], dict: 
                   </span>
                 ))}
               </div>
-              <a
                 href={`https://wa.me/972595769978?text=${encodeURIComponent(
-                  dict.common.whatsapp_message.replace('{bird}', bird.name[lang]) + ` \n ${bird.image}`
+                  dict.common.whatsapp_message.replace('{bird}', bird.name[lang])
                 )}`}
                 target="_blank"
                 className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-[#25D366] text-white font-bold hover:bg-[#128C7E] transition-all"
