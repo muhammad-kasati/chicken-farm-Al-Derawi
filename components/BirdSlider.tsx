@@ -6,27 +6,27 @@ import SafeImage from './SafeImage';
 
 export default function BirdSlider({ birds, dict, lang }: { birds: any[], dict: any, lang: string }) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [isPaused, setIsPaused] = useState(false);
   
-  // Triple the birds to create an infinite loop effect
-  const repeatedBirds = [...birds, ...birds, ...birds];
+  // Logic: Only loop if we have enough items to actually slide
+  const shouldLoop = birds.length > 3;
+  const displayBirds = shouldLoop ? [...birds, ...birds, ...birds] : birds;
   const originalCount = birds.length;
 
   useEffect(() => {
-    if (scrollRef.current && originalCount > 0) {
-      // Start from the middle set
-      const itemWidth = 320 + 24; // width + gap
+    if (shouldLoop && scrollRef.current) {
+      const itemWidth = 320 + 24; 
       scrollRef.current.scrollLeft = lang === 'ar' ? -(itemWidth * originalCount) : (itemWidth * originalCount);
     }
-  }, [originalCount, lang]);
+  }, [shouldLoop, originalCount, lang]);
 
   const handleScroll = () => {
-    if (!scrollRef.current || originalCount === 0) return;
+    if (!shouldLoop || !scrollRef.current) return;
     
     const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
     const itemWidth = 320 + 24;
     const threshold = itemWidth * originalCount;
 
-    // Logic for circular infinite scroll
     if (lang === 'ar') {
       if (Math.abs(scrollLeft) < 10) {
         scrollRef.current.scrollLeft = -threshold;
@@ -50,41 +50,50 @@ export default function BirdSlider({ birds, dict, lang }: { birds: any[], dict: 
     }
   };
 
-  // Autoplay
+  // Autoplay only if looping
   useEffect(() => {
+    if (!shouldLoop || isPaused) return;
+
     const interval = setInterval(() => {
-      const dir = lang === 'ar' ? 'right' : 'right'; // Always move in one direction
       scroll('right');
     }, 4000);
 
     return () => clearInterval(interval);
-  }, [lang]);
+  }, [shouldLoop, isPaused, lang]);
 
   return (
-    <div className="relative group">
-      {/* Scroll Buttons */}
-      <button
-        onClick={() => scroll('left')}
-        className="absolute left-0 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-white shadow-xl text-[#2d5a27] hover:bg-[#2d5a27] hover:text-white transition-all -ml-6 opacity-0 group-hover:opacity-100 hidden md:block"
-      >
-        <ChevronLeft size={24} />
-      </button>
+    <div 
+      className="relative group"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      {/* Scroll Buttons - Only show if sliding is possible */}
+      {originalCount > 1 && (
+        <>
+          <button
+            onClick={() => scroll('left')}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-white shadow-xl text-[#2d5a27] hover:bg-[#2d5a27] hover:text-white transition-all -ml-6 opacity-0 group-hover:opacity-100 hidden md:block"
+          >
+            <ChevronLeft size={24} />
+          </button>
 
-      <button
-        onClick={() => scroll('right')}
-        className="absolute right-0 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-white shadow-xl text-[#2d5a27] hover:bg-[#2d5a27] hover:text-white transition-all -mr-6 opacity-0 group-hover:opacity-100 hidden md:block"
-      >
-        <ChevronRight size={24} />
-      </button>
+          <button
+            onClick={() => scroll('right')}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-white shadow-xl text-[#2d5a27] hover:bg-[#2d5a27] hover:text-white transition-all -mr-6 opacity-0 group-hover:opacity-100 hidden md:block"
+          >
+            <ChevronRight size={24} />
+          </button>
+        </>
+      )}
 
       {/* Slider Container */}
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex gap-6 overflow-x-auto pb-8 scrollbar-hide no-scrollbar"
+        className={`flex gap-6 pb-8 scrollbar-hide no-scrollbar ${!shouldLoop ? 'justify-center overflow-hidden' : 'overflow-x-auto'}`}
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        {repeatedBirds.map((bird, index) => (
+        {displayBirds.map((bird, index) => (
           <div 
             key={`${bird._id}-${index}`} 
             className="flex-shrink-0 w-80 group/card relative rounded-3xl overflow-hidden bg-white border border-gray-100 shadow-sm hover:shadow-2xl transition-all hover:-translate-y-2"
